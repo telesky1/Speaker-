@@ -83,7 +83,6 @@
   <h1>扬声器查询</h1>
   <div class="query-section">
     <label for="sizeInput">输入尺寸(mm)：</label>
-
     <input type="text" id="sizeInput" placeholder="输入尺寸（矩形喇叭输入宽长，如5090）" oninput="searchModel()" />
     <br />
     <label for="impedanceInput">输入阻抗(Ω)：</label>
@@ -117,14 +116,15 @@
       let impedanceQuery = document.getElementById("impedanceInput").value.trim();
       let powerQuery = document.getElementById("powerInput").value.trim();
 
+      // 找到匹配的型号
       let result = speakerData.filter(speaker =>
         (!sizeQuery || speaker['尺寸（mm）'] === sizeQuery) &&
         (!impedanceQuery || speaker['阻抗(Ω)'] === impedanceQuery) &&
         (!powerQuery || speaker['功率（W）'] === powerQuery)
       );
 
-      // 显示结果为有序列表
       if (result.length > 0) {
+        // 显示匹配的型号
         document.getElementById("result").innerHTML =
           "<h3>查询结果：</h3><ol>" +
           result.map(speaker =>
@@ -132,7 +132,42 @@
           ).join('') +
           "</ol>";
       } else {
-        document.getElementById("result").innerHTML = "<h3>没有找到匹配的型号</h3>";
+        // 没有找到匹配的型号，查找与输入尺寸相差最近的型号
+        let sizeNumber = parseInt(sizeQuery);
+        let closestSpeakerSize = null;
+        let closestDiff = Infinity; // 设置初始差值为无穷大
+
+        speakerData.forEach(speaker => {
+          let speakerSize = parseInt(speaker['尺寸（mm）']);
+          let diff = Math.abs(speakerSize - sizeNumber);
+
+          if (diff < closestDiff) {
+            closestDiff = diff;
+            closestSpeakerSize = speakerSize; // 记录最近的尺寸
+          }
+        });
+
+        // 根据最近尺寸筛选型号
+        if (closestSpeakerSize !== null) {
+          result = speakerData.filter(speaker =>
+            speaker['尺寸（mm）'] === closestSpeakerSize.toString() &&
+            (!impedanceQuery || speaker['阻抗(Ω)'] === impedanceQuery) &&
+            (!powerQuery || speaker['功率（W）'] === powerQuery)
+          );
+
+          if (result.length > 0) {
+            document.getElementById("result").innerHTML =
+              "<h3>没有找到完全匹配的型号，推荐最近尺寸的型号：</h3><ol>" +
+              result.map(speaker =>
+                `<li><a href="${speaker['链接']}" target="_blank" rel="noopener noreferrer">${speaker['型号']}</a> (尺寸: ${speaker['尺寸（mm）']}mm, 阻抗: ${speaker['阻抗(Ω)']}Ω, 功率: ${speaker['功率（W）']}W)</li>`
+              ).join('') +
+              "</ol>";
+          } else {
+            document.getElementById("result").innerHTML = "<h3>没有找到匹配的型号</h3>";
+          }
+        } else {
+          document.getElementById("result").innerHTML = "<h3>没有找到匹配的型号</h3>";
+        }
       }
     }
   </script>
