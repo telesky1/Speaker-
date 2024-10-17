@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>扬声器查询</title>
+  <link rel="icon" href="天士凯LOGO.png" type="image/png">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4CAF50;
+    }
+
+    label {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    input {
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 300px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: white;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    ol {
+      padding-left: 20px;
+    }
+
+    li {
+      padding: 5px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    .query-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 800px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>扬声器查询</h1>
+  <div class="query-section">
+    <label for="sizeInput">输入尺寸(mm)：</label>
+
+    <input type="text" id="sizeInput" placeholder="输入尺寸（矩形喇叭输入宽长，如5090）" oninput="searchModel()" />
+    <br />
+    <label for="impedanceInput">输入阻抗(Ω)：</label>
+    <input type="text" id="impedanceInput" placeholder="输入阻抗" oninput="searchModel()" />
+    <br />
+    <label for="powerInput">输入功率(W)：</label>
+    <input type="text" id="powerInput" placeholder="输入功率" oninput="searchModel()" />
+  </div>
+  <div id="result"></div>
+
+  <script>
+    let speakerData = []; // 用于存储 CSV 数据
+
+    const csvFilePath = 'speakers.csv';
+
+    Papa.parse(csvFilePath, {
+      download: true,
+      header: true,
+      complete: function (results) {
+        speakerData = results.data;
+        console.log(speakerData); // 这里会输出解析后的数据
+      },
+      error: function (error) {
+        console.error("Error parsing CSV: ", error);
+      }
+    });
+
+    // 查询型号
+    function searchModel() {
+      let sizeQuery = document.getElementById("sizeInput").value.trim();
+      let impedanceQuery = document.getElementById("impedanceInput").value.trim();
+      let powerQuery = document.getElementById("powerInput").value.trim();
+
+      let result = speakerData.filter(speaker =>
+        (!sizeQuery || speaker['尺寸（mm）'] === sizeQuery) &&
+        (!impedanceQuery || speaker['阻抗(Ω)'] === impedanceQuery) &&
+        (!powerQuery || speaker['功率（W）'] === powerQuery)
+      );
+
+      // 显示结果为有序列表
+      if (result.length > 0) {
+        document.getElementById("result").innerHTML =
+          "<h3>查询结果：</h3><ol>" +
+          result.map(speaker =>
+            `<li><a href="${speaker['链接']}" target="_blank" rel="noopener noreferrer">${speaker['型号']}</a> (尺寸: ${speaker['尺寸（mm）']}mm, 阻抗: ${speaker['阻抗(Ω)']}Ω, 功率: ${speaker['功率（W）']}W)</li>`
+          ).join('') +
+          "</ol>";
+      } else {
+        document.getElementById("result").innerHTML = "<h3>没有找到匹配的型号</h3>";
+      }
+    }
+  </script>
+</body>
+
+</html>
